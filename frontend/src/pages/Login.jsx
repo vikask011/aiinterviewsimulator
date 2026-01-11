@@ -25,7 +25,7 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await axios.post(`${API_BASE}/login`, form);
+      const res = await axios.post(`https://aiinterviewsimulator.vercel.app/login`, form);
 
       // ✅ STORE AUTH DATA PROPERLY
       localStorage.setItem("token", res.data.token);

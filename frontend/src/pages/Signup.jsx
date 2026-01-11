@@ -26,7 +26,7 @@ const Signup = () => {
     setError("");
     
     try {
-      const res = await axios.post(`${API_BASE}/signup`, form);
+      const res = await axios.post(`https://aiinterviewsimulator.vercel.app/signup`, form);
       localStorage.setItem("token", res.data.token);
       // Storing basic user info for the UI
       localStorage.setItem("user", JSON.stringify({ name: form.name, email: form.email }));
