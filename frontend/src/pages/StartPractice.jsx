@@ -87,7 +87,7 @@ const StartPractice = () => {
         return;
       }
 
-      const res = await axios.post("http://localhost:5000/api/interview/start", form, {
+      const res = await axios.post("https://aiinterviewsimulator.vercel.app/api/interview/start", form, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

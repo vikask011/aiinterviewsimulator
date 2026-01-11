@@ -56,7 +56,7 @@ const Interview = () => {
       setPermissionGranted(true);
 
       const token = localStorage.getItem("token");
-      await fetch(`http://localhost:5000/api/interview/${id}/start`, {
+      await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/start`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -71,7 +71,7 @@ const Interview = () => {
     setLoadingQuestion(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/interview/${id}/first-question`, {
+      const res = await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/first-question`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -87,7 +87,7 @@ const Interview = () => {
     setLoadingQuestion(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/interview/${id}/next-question`, {
+      const res = await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/next-question`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -143,7 +143,7 @@ const Interview = () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
       const token = localStorage.getItem("token");
 
-      const res = await fetch(`http://localhost:5000/api/interview/${id}/answer`, {
+      const res = await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/answer`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -163,7 +163,7 @@ const Interview = () => {
 
   const finishInterview = () => {
     const token = localStorage.getItem("token");
-    fetch(`http://localhost:5000/api/interview/${id}/end`, {
+    fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/end`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

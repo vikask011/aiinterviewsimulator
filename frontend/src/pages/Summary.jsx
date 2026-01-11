@@ -30,7 +30,7 @@ const Summary = () => {
   const endInterviewThenFetch = async () => {
     try {
       const token = localStorage.getItem("token");
-      const endRes = await fetch(`http://localhost:5000/api/interview/${id}/end`, {
+      const endRes = await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/end`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -43,7 +43,7 @@ const Summary = () => {
         return;
       }
 
-      const summaryRes = await fetch(`http://localhost:5000/api/interview/${id}/summary`, {
+      const summaryRes = await fetch(`https://aiinterviewsimulator.vercel.app/api/interview/${id}/summary`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

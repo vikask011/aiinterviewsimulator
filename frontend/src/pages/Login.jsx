@@ -12,7 +12,7 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const API_BASE = "http://localhost:5000/api/auth";
+  const API_BASE = "https://aiinterviewsimulator.vercel.app/api/auth";
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });

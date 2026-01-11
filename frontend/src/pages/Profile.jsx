@@ -25,7 +25,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        "http://localhost:5000/api/interview/my-interviews",
+        "https://aiinterviewsimulator.vercel.app/api/interview/my-interviews",
         {
           headers: {
             Authorization: `Bearer ${token}`,
