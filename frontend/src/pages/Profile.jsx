@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  Briefcase, 
+  Building2, 
+  Settings2, 
+  Calendar, 
+  ArrowRight, 
+  Plus, 
+  History,
+  Trophy,
+  Layout
+} from "lucide-react";
 
 const Profile = () => {
   const [interviews, setInterviews] = useState([]);
@@ -13,7 +24,6 @@ const Profile = () => {
   const fetchMyInterviews = async () => {
     try {
       const token = localStorage.getItem("token");
-
       const res = await fetch(
         "http://localhost:5000/api/interview/my-interviews",
         {
@@ -22,7 +32,6 @@ const Profile = () => {
           },
         }
       );
-
       const data = await res.json();
       setInterviews(data.interviews);
     } catch (err) {
@@ -34,195 +43,163 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative mb-6">
-            <div className="w-20 h-20 mx-auto">
-              <svg className="animate-spin" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
-                  fill="none"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#3b82f6"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray="200"
-                  strokeDashoffset="50"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-3xl">
-              📊
-            </div>
-          </div>
-          <p className="text-lg font-semibold text-gray-700">
-            Loading your interviews...
-          </p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <div className="relative flex items-center justify-center">
+          <div className="w-20 h-20 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+          <div className="absolute text-2xl">🤖</div>
         </div>
+        <p className="mt-4 text-slate-500 font-medium animate-pulse">Analyzing your progress...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-2">
-                My Interviews
-              </h1>
-              <p className="text-gray-600">
-                {interviews.length > 0
-                  ? `You've completed ${interviews.length} interview${
-                      interviews.length !== 1 ? "s" : ""
-                    }`
-                  : "Start your interview journey today"}
-              </p>
+    <div className="min-h-screen bg-[#f8fafc] pb-20">
+      {/* --- TOP COVER BREADCRUMB --- */}
+      <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700 w-full"></div>
+
+      <div className="max-w-6xl mx-auto px-6 -mt-16">
+        {/* --- HEADER SECTION --- */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center text-4xl shadow-inner border border-white">
+                👤
+              </div>
+              <div>
+                <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                  My Interviews
+                </h1>
+                <p className="text-slate-500 mt-1 flex items-center gap-2">
+                  <History size={16} />
+                  {interviews.length > 0
+                    ? `Reviewing your ${interviews.length} past sessions`
+                    : "Your interview history will appear here"}
+                </p>
+              </div>
             </div>
-            <div className="text-6xl">👤</div>
+            
+            <button
+              onClick={() => navigate("/home")}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+            >
+              <Plus size={20} />
+              New Interview
+            </button>
           </div>
 
-          {/* Stats Cards */}
+          {/* --- QUICK STATS --- */}
           {interviews.length > 0 && (
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl text-center">
-                <div className="text-3xl font-bold text-blue-600">
-                  {interviews.length}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  Total Interviews
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl text-center">
-                <div className="text-3xl font-bold text-green-600">
-                  {
-                    new Set(interviews.map((i) => i.company))
-                      .size
-                  }
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  Companies
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl text-center">
-                <div className="text-3xl font-bold text-purple-600">
-                  {new Set(interviews.map((i) => i.role)).size}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">
-                  Roles
-                </div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
+              <StatCard 
+                label="Total Sessions" 
+                value={interviews.length} 
+                icon={<Layout className="text-blue-600" size={20}/>}
+                bgColor="bg-blue-50"
+              />
+              <StatCard 
+                label="Companies" 
+                value={new Set(interviews.map((i) => i.company)).size} 
+                icon={<Building2 className="text-emerald-600" size={20}/>}
+                bgColor="bg-emerald-50"
+              />
+              <StatCard 
+                label="Roles Tested" 
+                value={new Set(interviews.map((i) => i.role)).size} 
+                icon={<Trophy className="text-amber-600" size={20}/>}
+                bgColor="bg-amber-50"
+              />
             </div>
           )}
         </div>
 
-        {/* Empty State */}
-        {interviews.length === 0 && (
-          <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
-            <div className="text-8xl mb-4">🎯</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              No Interviews Yet
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Ready to practice? Start your first mock interview now!
+        {/* --- CONTENT AREA --- */}
+        {interviews.length === 0 ? (
+          <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-16 text-center">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Briefcase size={40} className="text-slate-300" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800">No history found</h2>
+            <p className="text-slate-500 max-w-sm mx-auto mt-2 mb-8">
+              Take your first AI-powered mock interview to see your performance metrics here.
             </p>
             <button
-              onClick={() => navigate("/landing")}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-semibold"
+              onClick={() => navigate("/home")}
+              className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition"
             >
-              Start Interview
+              Start Practice Session
             </button>
           </div>
-        )}
-
-        {/* Interviews Grid */}
-        {interviews.length > 0 && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {interviews.map((interview) => (
               <div
                 key={interview._id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all p-6 border-2 border-gray-100 hover:border-blue-200 group"
+                className="group bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
-                {/* Company Icon & Badge */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                <div className="flex justify-between items-start mb-6">
+                  <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg group-hover:bg-blue-600 transition-colors">
                     {interview.company.charAt(0)}
                   </div>
-                  <div className="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
-                    {interview.interviewType}
-                  </div>
-                </div>
-
-                {/* Company & Role */}
-                <h2 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
-                  {interview.company}
-                </h2>
-                <p className="text-gray-600 mb-1 flex items-center gap-2">
-                  <span className="text-lg">💼</span>
-                  <span className="font-medium">{interview.role}</span>
-                </p>
-
-                {/* Tech Stack (if available) */}
-                {interview.techStack && (
-                  <p className="text-sm text-gray-500 mb-3 flex items-center gap-2">
-                    <span>⚙️</span>
-                    <span>{interview.techStack}</span>
-                  </p>
-                )}
-
-                {/* Date */}
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4 pt-3 border-t border-gray-100">
-                  <span>📅</span>
-                  <span>
-                    {new Date(
-                      interview.createdAt
-                    ).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                  <span className="px-3 py-1 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-widest rounded-lg">
+                    {interview.interviewType || "Technical"}
                   </span>
                 </div>
 
-                {/* View Button */}
+                <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
+                  {interview.company}
+                </h3>
+                
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center gap-2 text-slate-600 text-sm">
+                    <Briefcase size={14} className="text-slate-400" />
+                    <span className="font-medium">{interview.role}</span>
+                  </div>
+                  {interview.techStack && (
+                    <div className="flex items-center gap-2 text-slate-500 text-sm">
+                      <Settings2 size={14} className="text-slate-400" />
+                      <span className="truncate">{interview.techStack}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-slate-400 text-[12px] pt-2">
+                    <Calendar size={12} />
+                    <span>
+                      {new Date(interview.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+
                 <button
-                  className="w-full py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 transition-all shadow-md hover:shadow-lg font-semibold group-hover:scale-105 transform"
-                  onClick={() =>
-                    navigate(`/summary/${interview._id}`)
-                  }
+                  onClick={() => navigate(`/summary/${interview._id}`)}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-700 rounded-xl font-bold group-hover:bg-blue-50 group-hover:text-blue-700 transition-all"
                 >
-                  View Summary →
+                  View Analysis
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* New Interview Button (when interviews exist) */}
-        {interviews.length > 0 && (
-          <div className="text-center mt-8">
-            <button
-              onClick={() => navigate("/home")}
-              className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl font-semibold text-lg"
-            >
-              + Start New Interview
-            </button>
           </div>
         )}
       </div>
     </div>
   );
 };
+
+/* --- HELPER COMPONENTS --- */
+const StatCard = ({ label, value, icon, bgColor }) => (
+  <div className={`p-5 rounded-2xl border border-white shadow-sm flex items-center gap-4 ${bgColor}`}>
+    <div className="bg-white p-3 rounded-xl shadow-sm">
+      {icon}
+    </div>
+    <div>
+      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</p>
+      <p className="text-2xl font-black text-slate-900">{value}</p>
+    </div>
+  </div>
+);
 
 export default Profile;

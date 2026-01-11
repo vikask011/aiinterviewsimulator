@@ -14,6 +14,7 @@ import Home from "./pages/Home";
 import Interview from "./pages/Interview";
 import Summary from "./pages/Summary";
 import Profile from "./pages/Profile";
+import StartPractice from "./pages/StartPractice";
 
 /* =========================
    PRIVATE ROUTE
@@ -72,6 +73,16 @@ const AppRoutes = () => {
             </PrivateRoute>
           }
         />
+ 
+ <Route
+          path="/startpractice"
+          element={
+            <PrivateRoute>
+              <StartPractice />
+            </PrivateRoute>
+          }
+        />
+
 
         <Route
           path="/profile"

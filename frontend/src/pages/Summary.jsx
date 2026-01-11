@@ -1,88 +1,77 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { 
+  FileText, 
+  RefreshCcw, 
+  CheckCircle, 
+  TrendingUp, 
+  Target, 
+  BookOpen, 
+  AlertCircle,
+  Loader2
+} from "lucide-react";
 
 const Summary = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
-  const [loadingText, setLoadingText] = useState(
-    "🧠 Generating interview summary..."
-  );
-
-  // 🔒 Prevent double execution (React 18 strict mode)
+  const [loadingText, setLoadingText] = useState("Analyzing your performance...");
   const hasRunRef = useRef(false);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     if (hasRunRef.current) return;
     hasRunRef.current = true;
-
     endInterviewThenFetch();
   }, []);
 
   const endInterviewThenFetch = async () => {
     try {
       const token = localStorage.getItem("token");
-
-      /* ===========================
-         STEP 1: END INTERVIEW
-      ============================ */
-      const endRes = await fetch(
-        `http://localhost:5000/api/interview/${id}/end`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const endRes = await fetch(`http://localhost:5000/api/interview/${id}/end`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const endData = await endRes.json();
 
-      // ⏳ Summary still generating → retry
       if (endData.status === "processing") {
-        setLoadingText("⏳ Finalizing summary, please wait...");
-        setTimeout(endInterviewThenFetch, 2000);
+        setLoadingText("Finalizing your personalized report...");
+        setTimeout(endInterviewThenFetch, 2500);
         return;
       }
 
-      /* ===========================
-         STEP 2: FETCH SUMMARY
-      ============================ */
-      const summaryRes = await fetch(
-        `http://localhost:5000/api/interview/${id}/summary`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const summaryRes = await fetch(`http://localhost:5000/api/interview/${id}/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (!summaryRes.ok) {
-        throw new Error("Summary not ready");
-      }
+      if (!summaryRes.ok) throw new Error("Summary data is still being processed.");
 
       const summaryData = await summaryRes.json();
       setSummary(summaryData.summary);
     } catch (err) {
-      console.error("❌ Summary Fetch Error:", err);
-      setError("Unable to load interview summary. Please try again.");
+      setError(err.message || "Unable to load summary.");
     }
   };
 
-  /* ===========================
-     UI STATES
-  ============================ */
+  const handleDownloadPDF = () => {
+    // Standard professional approach: use window.print with @media print CSS
+    // This is the most reliable way to generate a PDF across all browsers
+    window.print();
+  };
+
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md text-center">
-          <div className="text-6xl mb-4">😔</div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Oops!</h2>
-          <p className="text-red-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md text-center border border-red-100">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Something went wrong</h2>
+          <p className="text-slate-600 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all"
           >
             Try Again
           </button>
@@ -93,185 +82,132 @@ const Summary = () => {
 
   if (!summary) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="relative mb-8">
-            <div className="w-24 h-24 mx-auto">
-              <svg className="animate-spin" viewBox="0 0 100 100">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#e5e7eb"
-                  strokeWidth="8"
-                  fill="none"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="40"
-                  stroke="#3b82f6"
-                  strokeWidth="8"
-                  fill="none"
-                  strokeDasharray="200"
-                  strokeDashoffset="50"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl">
-              🧠
-            </div>
-          </div>
-          <p className="text-xl font-semibold text-gray-800 mb-2">
-            {loadingText}
-          </p>
-          <p className="text-sm text-gray-600">
-            This may take a few seconds…
-          </p>
-        </div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+        <p className="text-lg font-medium text-slate-700">{loadingText}</p>
+        <p className="text-sm text-slate-400 mt-2">This usually takes about 5-10 seconds</p>
       </div>
     );
   }
 
-  /* ===========================
-     SUMMARY VIEW
-  ============================ */
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6 text-center">
-          <div className="text-5xl mb-3">🎯</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Interview Summary
-          </h1>
-          <p className="text-gray-600">
-            Here's your personalized performance analysis
-          </p>
-        </div>
-
-        {/* Summary Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Section
-            title="💪 Strengths"
-            items={summary.strengths}
-            color="green"
-            icon="✓"
-          />
-          <Section
-            title="🎯 Areas for Improvement"
-            items={summary.weaknesses}
-            color="orange"
-            icon="!"
-          />
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          <Section
-            title="📈 Action Items"
-            items={summary.improvements}
-            color="blue"
-            icon="→"
-          />
-          <Section
-            title="📚 Topics to Study"
-            items={summary.topicsToWorkOn}
-            color="purple"
-            icon="📖"
-          />
-        </div>
-
-        {/* Overall Feedback */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="text-3xl">💬</div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              Overall Feedback
-            </h2>
+    <div className="min-h-screen bg-[#F8FAFC] py-12 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto" ref={reportRef}>
+        
+        {/* HEADER SECTION */}
+        <div className="bg-white rounded-3xl p-8 mb-8 shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+              <span className="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full uppercase tracking-wider">
+                Analysis Complete
+              </span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900">Interview Summary</h1>
+            <p className="text-slate-500 mt-1">Review your performance and key improvement areas.</p>
           </div>
-          <p className="text-gray-700 text-lg leading-relaxed">
+          <div className="flex gap-3 no-print">
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-5 py-3 bg-slate-100 text-slate-700 rounded-xl font-bold hover:bg-slate-200 transition-all border border-slate-200"
+            >
+              <FileText size={18} />
+              PDF
+            </button>
+            <button
+              onClick={() => navigate("/home")}
+              className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+            >
+              <RefreshCcw size={18} />
+              New Session
+            </button>
+          </div>
+        </div>
+
+        {/* FEEDBACK HIGHLIGHT */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 mb-8 text-white shadow-xl">
+          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
+            <Target size={22} />
+            Overall Feedback
+          </h2>
+          <p className="text-blue-50 text-lg leading-relaxed opacity-95">
             {summary.overallFeedback}
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center mt-8">
-          <button
-            onClick={() => window.print()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg font-medium"
-          >
-            📄 Download PDF
-          </button>
-          <button
-            onClick={() => (window.location.href = "/home")}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg font-medium"
-          >
-            🔄 Start New Interview
-          </button>
+        {/* DETAILED ANALYSIS GRID */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <SummaryCard 
+            title="Key Strengths" 
+            items={summary.strengths} 
+            icon={<CheckCircle className="text-emerald-500" />} 
+            bgColor="bg-emerald-50/50"
+            borderColor="border-emerald-100"
+          />
+          <SummaryCard 
+            title="Improvement Areas" 
+            items={summary.weaknesses} 
+            icon={<TrendingUp className="text-amber-500" />} 
+            bgColor="bg-amber-50/50" 
+            borderColor="border-amber-100"
+          />
+          <SummaryCard 
+            title="Action Items" 
+            items={summary.improvements} 
+            icon={<RefreshCcw className="text-blue-500" />} 
+            bgColor="bg-blue-50/50"
+            borderColor="border-blue-100"
+          />
+          <SummaryCard 
+            title="Topics to Study" 
+            items={summary.topicsToWorkOn} 
+            icon={<BookOpen className="text-purple-500" />} 
+            bgColor="bg-purple-50/50"
+            borderColor="border-purple-100"
+          />
+        </div>
+
+        {/* FOOTER INFO (Print Only) */}
+        <div className="hidden print:block mt-12 text-center text-slate-400 text-xs border-t pt-8">
+          Generated by AI Interviewer • {new Date().toLocaleDateString()}
         </div>
       </div>
+
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background-color: white !important; padding: 0 !important; }
+          .max-w-4xl { max-width: 100% !important; margin: 0 !important; }
+          .shadow-xl, .shadow-sm { shadow: none !important; border: 1px solid #e2e8f0 !important; }
+          .rounded-3xl { border-radius: 12px !important; }
+        }
+      `}</style>
     </div>
   );
 };
 
 /* ===========================
-   REUSABLE SECTION WITH COLOR THEMES
+    SUB-COMPONENT: CARD
 =========================== */
-const Section = ({ title, items = [], color, icon }) => {
-  const colorClasses = {
-    green: {
-      bg: "bg-green-50",
-      border: "border-green-200",
-      text: "text-green-800",
-      iconBg: "bg-green-100",
-      iconText: "text-green-600",
-    },
-    orange: {
-      bg: "bg-orange-50",
-      border: "border-orange-200",
-      text: "text-orange-800",
-      iconBg: "bg-orange-100",
-      iconText: "text-orange-600",
-    },
-    blue: {
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      text: "text-blue-800",
-      iconBg: "bg-blue-100",
-      iconText: "text-blue-600",
-    },
-    purple: {
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      text: "text-purple-800",
-      iconBg: "bg-purple-100",
-      iconText: "text-purple-600",
-    },
-  };
-
-  const theme = colorClasses[color] || colorClasses.blue;
-
+const SummaryCard = ({ title, items = [], icon, bgColor, borderColor }) => {
   return (
-    <div
-      className={`${theme.bg} border-2 ${theme.border} rounded-2xl p-6 shadow-lg transition-all hover:shadow-xl`}
-    >
-      <h2 className={`text-xl font-bold ${theme.text} mb-4`}>{title}</h2>
-      {items.length > 0 ? (
-        <ul className="space-y-3">
+    <div className={`p-6 rounded-3xl border ${borderColor} ${bgColor} flex flex-col h-full`}>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-white rounded-xl shadow-sm">
+          {icon}
+        </div>
+        <h3 className="font-bold text-slate-800 text-lg">{title}</h3>
+      </div>
+      {items && items.length > 0 ? (
+        <ul className="space-y-3 flex-1">
           {items.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-3">
-              <span
-                className={`${theme.iconBg} ${theme.iconText} w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm mt-0.5`}
-              >
-                {icon}
-              </span>
-              <span className="text-gray-700 leading-relaxed">{item}</span>
+            <li key={idx} className="flex items-start gap-2 text-slate-600 text-sm leading-relaxed">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 shrink-0" />
+              {item}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500 italic">No items to display</p>
+        <p className="text-slate-400 italic text-sm">Nothing recorded for this section.</p>
       )}
     </div>
   );

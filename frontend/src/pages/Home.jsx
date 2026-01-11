@@ -1,11 +1,9 @@
-import Navbar from "../components/Navbar";
-import Landing from "./Landing";
+import LandingPage from "./LandingPage";
 
 const Home = () => {
   return (
     <>
-     
-      <Landing />
+      <LandingPage />
     </>
   );
 };
