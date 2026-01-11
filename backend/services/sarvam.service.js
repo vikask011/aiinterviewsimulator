@@ -2,62 +2,47 @@ import axios from "axios";
 
 const SARVAM_API_URL = "https://api.sarvam.ai/v1/chat/completions";
 
-export const generateQuestion = async ({
-  company,
-  role,
-  experience,
-  interviewType,
-  techStack,
-}) => {
+export const generateQuestion = async (interview) => {
+  const { 
+    company, role, experience, interviewType, 
+    techStack, transcript, currentQuestionIndex, questionLimit 
+  } = interview;
+
   try {
-    const systemPrompt = `
-You are an AI interviewer conducting a LIVE SPOKEN interview.
+    // Clean history: Ensure we don't send empty or undefined strings
+    const history = transcript && transcript.length > 0
+      ? transcript
+          .map((msg) => `${msg.type === "ai" ? "Interviewer" : "Candidate"}: ${msg.text}`)
+          .join("\n")
+      : "No questions asked yet.";
 
-Rules:
-- Do NOT ask coding questions
-- Do NOT ask the candidate to write code
-- Ask ONLY conceptual, verbal questions
-- Ask ONLY ONE question
-- Return ONLY the question text
-`;
+    const systemPrompt = `You are a professional AI interviewer. Currently at question ${currentQuestionIndex + 1} of ${questionLimit}. CRITICAL: Never repeat a question from the history. Return ONLY the question text.`;
 
-    const userPrompt = `
-Company: ${company}
-Role: ${role}
-Experience: ${experience}
-Interview Type: ${interviewType}
-Tech Stack: ${techStack || "Not specified"}
-`;
+    const userPrompt = `Role: ${role}. Company: ${company}. History: ${history}. Generate the next unique question:`;
 
     const response = await axios.post(
       SARVAM_API_URL,
       {
-        model: "sarvam-m",
+        // ⚠️ Check your documentation: If 'sarvam-2k' fails, use 'sarvam-1'
+        model: "sarvam-m", 
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.6,
-        max_tokens: 120,
-        stream: false,
+        temperature: 0.7,
       },
       {
         headers: {
           "Content-Type": "application/json",
           "api-subscription-key": process.env.SARVAM_API_KEY,
         },
-        timeout: 20000,
       }
     );
 
-    const text = response.data?.choices?.[0]?.message?.content?.trim();
-
-    if (!text) throw new Error("Empty Sarvam response");
-
-    return text;
+    return response.data?.choices?.[0]?.message?.content?.trim();
   } catch (err) {
-    console.error("⚠️ Sarvam Question Failed:", err.response?.data || err.message);
-
-    return `Can you explain a core concept related to your role as a ${role} and how it is used in real-world applications?`;
+    // Log the actual error body from Sarvam to see exactly what is 'Bad'
+    console.error("❌ Sarvam API Details:", err.response?.data || err.message);
+    return `Can you explain a technical challenge you faced while working with ${techStack || role}?`;
   }
 };

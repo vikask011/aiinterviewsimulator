@@ -18,8 +18,18 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await axios.post(`${API_BASE}/login`, form);
+
+      // ✅ STORE AUTH DATA PROPERLY
       localStorage.setItem("token", res.data.token);
-      navigate("/home");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          name: res.data.name,
+          email: res.data.email,
+        })
+      );
+
+      window.location.href = "/home";
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
     }
@@ -37,6 +47,7 @@ const Login = () => {
           name="email"
           type="email"
           placeholder="Email"
+          value={form.email}
           onChange={handleChange}
           required
           className="w-full p-2 border mb-4 rounded"
@@ -46,12 +57,16 @@ const Login = () => {
           name="password"
           type="password"
           placeholder="Password"
+          value={form.password}
           onChange={handleChange}
           required
           className="w-full p-2 border mb-4 rounded"
         />
 
-        <button className="w-full bg-green-600 text-white p-2 rounded">
+        <button
+          type="submit"
+          className="w-full bg-green-600 text-white p-2 rounded"
+        >
           Login
         </button>
 

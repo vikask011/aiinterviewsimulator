@@ -4,7 +4,7 @@ import Landing from "./Landing";
 const Home = () => {
   return (
     <>
-      <Navbar />
+     
       <Landing />
     </>
   );

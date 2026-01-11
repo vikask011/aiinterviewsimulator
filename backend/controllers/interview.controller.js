@@ -1,4 +1,3 @@
-//interview.controller.js
 import Interview from "../models/Interview.js";
 import { generateQuestion } from "../services/sarvam.service.js";
 import { textToSpeech } from "../services/deepgram.service.js";
@@ -7,20 +6,14 @@ import { generateInterviewSummary } from "../services/sarvamSummary.service.js";
 
 
 /* =====================================================
-   CREATE INTERVIEW (FROM LANDING PAGE)
+   CREATE INTERVIEW
 ===================================================== */
 export const startInterview = async (req, res) => {
   try {
-    const {
-      company,
-      role,
-      experience,
-      interviewType,
-      techStack,
-      duration,
-    } = req.body;
+    // Changed duration to questionLimit
+    const { company, role, experience, interviewType, techStack, questionLimit } = req.body;
 
-    if (!company || !role || !experience || !interviewType || !duration) {
+    if (!company || !role || !experience || !interviewType || !questionLimit) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -31,191 +24,175 @@ export const startInterview = async (req, res) => {
       experience,
       interviewType,
       techStack: techStack || "",
-      duration,
+      questionLimit: parseInt(questionLimit), // Store the limit (5, 10, 15, etc.)
       status: "created",
+      transcript: [],
+      currentQuestionIndex: 0,
     });
 
-    res.status(201).json({
-      interviewSessionId: interview._id,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(201).json({ interviewSessionId: interview._id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
 /* =====================================================
-   BEGIN INTERVIEW (AFTER CAMERA PERMISSION)
+   BEGIN INTERVIEW
 ===================================================== */
 export const beginInterview = async (req, res) => {
-  try {
-    const interview = await Interview.findById(req.params.id);
+  const interview = await Interview.findById(req.params.id);
+  if (!interview) return res.status(404).json({ message: "Interview not found" });
 
-    if (!interview) {
-      return res.status(404).json({ message: "Interview not found" });
-    }
-
-    if (interview.status !== "created") {
-      return res.status(400).json({ message: "Interview already started" });
-    }
-
-    interview.status = "in-progress";
-    interview.startedAt = new Date();
-
-    await interview.save();
-
-    res.json({ message: "Interview started successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  if (interview.status !== "created") {
+    return res.status(400).json({ message: "Interview already started" });
   }
+
+  interview.status = "in-progress";
+  interview.startedAt = new Date();
+  await interview.save();
+
+  res.json({ message: "Interview started" });
 };
 
 /* =====================================================
-   SUBMIT USER ANSWER (SPEECH → TEXT)
+    FIRST QUESTION (UPDATED TO RETURN PROGRESS)
 ===================================================== */
-export const submitAnswer = async (req, res) => {
+export const getFirstQuestion = async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
-    if (!interview) {
-      return res.status(404).json({ message: "Interview not found" });
-    }
+    if (!interview) return res.status(404).json({ message: "Interview not found" });
 
-    const transcriptText = await speechToText(req.body);
-
-    interview.transcript.push({
-      type: "user",
-      text: transcriptText || "(No speech detected)",
-    });
-
-    await interview.save();
-
-    res.json({
-      answerText: transcriptText,
-      readyForNext: true,
-    });
-  } catch (err) {
-    console.error("Answer Error:", err.message);
-    res.status(500).json({ message: "Failed to process answer" });
-  }
-};
-
-/* =====================================================
-   ASK NEXT AI QUESTION (ONE AT A TIME)
-===================================================== */
-export const askNextQuestion = async (req, res) => {
-  try {
-    const interview = await Interview.findById(req.params.id);
-    if (!interview) {
-      return res.status(404).json({ message: "Interview not found" });
-    }
-
-    // 🔒 BACKEND SAFETY — prevent duplicate AI questions
-    const lastEntry =
-      interview.transcript[interview.transcript.length - 1];
-
-    if (lastEntry && lastEntry.type === "ai") {
-      return res.json({
-        questionText: lastEntry.text,
-        audio: null, // frontend must NOT replay audio
-      });
+    if (interview.transcript.length > 0) {
+      return res.status(400).json({ message: "First question already asked" });
     }
 
     const question = await generateQuestion(interview);
 
     interview.transcript.push({ type: "ai", text: question });
-    interview.currentQuestionIndex += 1;
-
+    interview.currentQuestionIndex = 1;
     await interview.save();
 
-    const audioBuffer = await textToSpeech(question);
+    const audio = await textToSpeech(question);
 
-    res.json({
-      questionText: question,
-      audio: audioBuffer.toString("base64"),
+    // ✅ ADDED: currentNumber and totalQuestions
+    res.json({ 
+      questionText: question, 
+      audio: audio.toString("base64"),
+      currentNumber: interview.currentQuestionIndex,
+      totalQuestions: interview.questionLimit
     });
   } catch (err) {
-    console.error("Question Error:", err.message);
-    res.status(500).json({ message: "Failed to generate question" });
+    res.status(500).json({ message: err.message });
   }
 };
+/* =====================================================
+   SUBMIT ANSWER
+===================================================== */
+export const submitAnswer = async (req, res) => {
+  const interview = await Interview.findById(req.params.id);
+  if (!interview) return res.status(404).json({ message: "Interview not found" });
 
+  const text = await speechToText(req.body);
 
-// controllers/interview.controller.js
+  interview.transcript.push({
+    type: "user",
+    text: text || "(No speech detected)",
+  });
 
+  await interview.save();
+
+  res.json({ answerText: text, readyForNext: true });
+};
+
+/* =====================================================
+   NEXT QUESTION (WITH LIMIT CHECK)
+===================================================== */
+export const askNextQuestion = async (req, res) => {
+  const interview = await Interview.findById(req.params.id);
+  if (!interview) return res.status(404).json({ message: "Interview not found" });
+
+  // 1. Check if we have already reached the question limit
+  if (interview.currentQuestionIndex >= interview.questionLimit) {
+    return res.json({ 
+      message: "Interview limit reached", 
+      isFinished: true 
+    });
+  }
+
+  const last = interview.transcript[interview.transcript.length - 1];
+  if (!last || last.type !== "user") {
+    return res.status(400).json({ message: "Answer the current question first" });
+  }
+
+  const question = await generateQuestion(interview);
+
+  interview.transcript.push({ type: "ai", text: question });
+  interview.currentQuestionIndex += 1;
+  await interview.save();
+
+  const audio = await textToSpeech(question);
+
+  res.json({
+    questionText: question,
+    audio: audio.toString("base64"),
+    currentNumber: interview.currentQuestionIndex,
+    totalQuestions: interview.questionLimit
+  });
+};
+/* =====================================================
+   END INTERVIEW + SUMMARY
+===================================================== */
 export const endInterview = async (req, res) => {
-  try {
-    const interview = await Interview.findById(req.params.id);
-    if (!interview) {
-      return res.status(404).json({ message: "Interview not found" });
-    }
+  const interview = await Interview.findById(req.params.id);
+  if (!interview) return res.status(404).json({ message: "Interview not found" });
 
-    // ✅ Return ONLY if summary already exists
-    if (interview.status === "completed" && interview.summary) {
-      return res.json({ summary: interview.summary });
-    }
-
-    // 🔒 Lock summary generation
-    interview.status = "completing";
-    await interview.save();
-
-    let summary;
-
-    // 🧠 Handle empty / early-ended interviews
-    if (!interview.transcript || interview.transcript.length === 0) {
-      summary = {
-        strengths: [],
-        weaknesses: ["Interview ended before sufficient answers"],
-        improvements: ["Complete the interview fully for better feedback"],
-        topicsToWorkOn: [],
-        overallFeedback:
-          "The interview was ended early, so a detailed evaluation could not be generated.",
-      };
-    } else {
-      summary = await generateInterviewSummary(interview);
-    }
-
-    interview.summary = summary;
-    interview.status = "completed";
-    interview.endedAt = new Date();
-
-    await interview.save();
-
-    return res.json({ summary });
-  } catch (err) {
-    console.error("❌ End Interview Error:", err.message);
-    res.status(500).json({ message: "Failed to end interview" });
+  if (interview.status === "completed" && interview.summary) {
+    return res.json({ summary: interview.summary });
   }
+
+  interview.status = "completed";
+  interview.endedAt = new Date();
+
+  const summary =
+    interview.transcript.length === 0
+      ? {
+          strengths: [],
+          weaknesses: ["Interview ended too early"],
+          improvements: ["Complete the interview"],
+          topicsToWorkOn: [],
+          overallFeedback: "Not enough data to evaluate",
+        }
+      : await generateInterviewSummary(interview);
+
+  interview.summary = summary;
+  await interview.save();
+
+  res.json({ summary });
 };
 
+/* =====================================================
+   GET SUMMARY
+===================================================== */
 export const getInterviewSummary = async (req, res) => {
   const interview = await Interview.findById(req.params.id);
-  if (!interview) {
-    return res.status(404).json({ message: "Interview not found" });
-  }
+  if (!interview) return res.status(404).json({ message: "Interview not found" });
 
   if (!interview.summary) {
-    return res.status(409).json({
-      message: "Summary not generated yet",
-    });
+    return res.status(409).json({ message: "Summary not ready" });
   }
 
-  return res.json({ summary: interview.summary });
+  res.json({ summary: interview.summary });
 };
 
+/* =====================================================
+   MY INTERVIEWS
+===================================================== */
 export const getMyInterviews = async (req, res) => {
-  try {
-    const interviews = await Interview.find({
-      userId: req.user.id,
-      status: "completed",
-      summary: { $ne: null },
-    })
-      .sort({ createdAt: -1 })
-      .select(
-        "company role interviewType experience summary createdAt"
-      );
+  const interviews = await Interview.find({
+    userId: req.user.id,
+    status: "completed",
+    summary: { $ne: null },
+  }).sort({ createdAt: -1 });
 
-    res.json({ interviews });
-  } catch (err) {
-    console.error("❌ Get My Interviews Error:", err.message);
-    res.status(500).json({ message: "Failed to fetch interviews" });
-  }
+  res.json({ interviews });
 };

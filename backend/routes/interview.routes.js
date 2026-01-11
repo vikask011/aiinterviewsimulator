@@ -4,6 +4,7 @@ import protect from "../middleware/auth.middleware.js";
 import {
   startInterview,
   beginInterview,
+  getFirstQuestion,
   askNextQuestion,
   submitAnswer,
   endInterview,
@@ -13,22 +14,17 @@ import {
 
 const router = express.Router();
 
-/* =========================
-   STATIC ROUTES (FIRST)
-========================= */
+/* ===== STATIC ===== */
 router.get("/my-interviews", protect, getMyInterviews);
 
-/* =========================
-   INTERVIEW CREATION
-========================= */
+/* ===== CREATE ===== */
 router.post("/start", protect, startInterview);
 
-/* =========================
-   DYNAMIC ROUTES (LAST)
-========================= */
+/* ===== FLOW ===== */
 router.post("/:id/start", protect, beginInterview);
-router.get("/:id/next-question", protect, askNextQuestion);
+router.get("/:id/first-question", protect, getFirstQuestion);
 router.post("/:id/answer", protect, submitAnswer);
+router.get("/:id/next-question", protect, askNextQuestion);
 router.post("/:id/end", protect, endInterview);
 router.get("/:id/summary", protect, getInterviewSummary);
 

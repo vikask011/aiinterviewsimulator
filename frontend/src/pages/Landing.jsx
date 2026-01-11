@@ -12,7 +12,7 @@ const Landing = () => {
     experience: "",
     interviewType: "",
     techStack: "",
-    duration: "",
+    questionLimit: "", // Changed from duration
   });
 
   const [loading, setLoading] = useState(false);
@@ -48,12 +48,8 @@ const Landing = () => {
     "Mixed"
   ];
 
-  const durations = [
-    "10 minutes",
-    "15 minutes",
-    "30 minutes",
-    "45 minutes"
-  ];
+  // Updated to show numerical question limits
+  const questionLimits = ["5", "10", "15", "20"];
 
   const handleSelect = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -74,7 +70,7 @@ const Landing = () => {
       !form.role ||
       !form.experience ||
       !form.interviewType ||
-      !form.duration
+      !form.questionLimit
     ) {
       alert("Please complete all steps");
       return;
@@ -90,6 +86,7 @@ const Landing = () => {
         return;
       }
 
+      // Sends form containing questionLimit to the backend
       const res = await axios.post(
         "http://localhost:5000/api/interview/start",
         form,
@@ -215,13 +212,13 @@ const Landing = () => {
         return (
           <div className="fade-in">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">
-              Tech Stack (Optional)
+              Optional Requirement 
             </h2>
             <input
               type="text"
               value={form.techStack}
               onChange={(e) => setForm(prev => ({ ...prev, techStack: e.target.value }))}
-              placeholder="e.g. React, Node.js, MongoDB"
+              placeholder="e.g. Ask about Next.js"
               className="w-full p-4 border-2 border-gray-200 rounded-lg mb-4 focus:border-blue-500 focus:outline-none"
             />
             <button
@@ -237,46 +234,46 @@ const Landing = () => {
         return (
           <div className="fade-in">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">
-              Interview Duration
+              Number of Questions
             </h2>
             <div className="grid grid-cols-2 gap-3 mb-6">
-              {durations.map((duration) => (
+              {questionLimits.map((limit) => (
                 <button
-                  key={duration}
-                  onClick={() => handleSelect("duration", duration)}
+                  key={limit}
+                  onClick={() => handleSelect("questionLimit", limit)}
                   className={`p-4 rounded-lg border-2 transition-all hover:border-blue-500 hover:bg-blue-50 ${
-                    form.duration === duration
+                    form.questionLimit === limit
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200"
                   }`}
                 >
-                  <span className="font-medium">{duration}</span>
+                  <span className="font-medium">{limit} Questions</span>
                 </button>
               ))}
             </div>
 
-            {form.duration && (
+            {form.questionLimit && (
               <>
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold mb-2">Review Your Selection:</h3>
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <h3 className="font-semibold mb-2 text-blue-700">Interview Summary:</h3>
                   <div className="text-sm space-y-1 text-gray-700">
                     <p><strong>Company:</strong> {form.company}</p>
                     <p><strong>Role:</strong> {form.role}</p>
                     <p><strong>Experience:</strong> {form.experience}</p>
-                    <p><strong>Type:</strong> {form.interviewType}</p>
+                    <p><strong>Interview Type:</strong> {form.interviewType}</p>
                     {form.techStack && <p><strong>Tech Stack:</strong> {form.techStack}</p>}
-                    <p><strong>Duration:</strong> {form.duration}</p>
+                    <p><strong>Total Questions:</strong> {form.questionLimit}</p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleStartInterview}
                   disabled={loading}
-                  className={`w-full mt-4 p-4 rounded-lg text-lg font-semibold text-white transition-all ${
-                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                  className={`w-full mt-4 p-4 rounded-lg text-lg font-semibold text-white shadow-lg transition-all ${
+                    loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 active:scale-95"
                   }`}
                 >
-                  {loading ? "Starting Interview..." : "🚀 Start Interview"}
+                  {loading ? "Preparing Session..." : "🚀 Start Interview"}
                 </button>
               </>
             )}
@@ -284,17 +281,7 @@ const Landing = () => {
         );
 
       default:
-        return (
-          <div className="text-center">
-            <p className="text-gray-600">Invalid step</p>
-            <button
-              onClick={() => setStep(1)}
-              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Start Over
-            </button>
-          </div>
-        );
+        return null;
     }
   };
 
@@ -310,20 +297,20 @@ const Landing = () => {
         }
       `}</style>
       
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-2xl border border-white">
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-sm font-bold text-blue-600">
               Step {step} of 6
             </span>
-            <span className="text-sm font-medium text-gray-600">
-              {Math.round((step / 6) * 100)}%
+            <span className="text-sm font-bold text-gray-400">
+              {Math.round((step / 6) * 100)}% Complete
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-100 rounded-full h-2.5">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${Math.min((step / 6) * 100, 100)}%` }}
             ></div>
           </div>
@@ -336,9 +323,9 @@ const Landing = () => {
         {step > 1 && (
           <button
             onClick={handleBack}
-            className="mt-4 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            className="mt-6 flex items-center text-gray-500 hover:text-blue-600 font-semibold transition-colors"
           >
-            ← Back
+            <span className="mr-1">←</span> Back to Step {step - 1}
           </button>
         )}
       </div>

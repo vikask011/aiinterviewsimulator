@@ -69,7 +69,11 @@ const interviewSchema = new mongoose.Schema(
       default: "",
     },
 
-    duration: { type: String, required: true },
+    // ✅ UPDATED: Changed from duration (String) to questionLimit (Number)
+    questionLimit: { 
+      type: Number, 
+      required: true 
+    },
 
     status: {
       type: String,
@@ -78,13 +82,13 @@ const interviewSchema = new mongoose.Schema(
         "in-progress",
         "completing",
         "completed",
-        "cancelled", // ✅ recommended
+        "cancelled",
       ],
       default: "created",
     },
 
     /* =========================
-       INTERVIEW FLOW CONTROL
+        INTERVIEW FLOW CONTROL
     ========================= */
     currentQuestionIndex: {
       type: Number,
@@ -97,7 +101,7 @@ const interviewSchema = new mongoose.Schema(
     },
 
     /* =========================
-       INTERVIEW SUMMARY
+        INTERVIEW SUMMARY
     ========================= */
     summary: {
       type: summarySchema,

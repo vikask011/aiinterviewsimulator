@@ -204,7 +204,7 @@ const Summary = () => {
             📄 Download PDF
           </button>
           <button
-            onClick={() => (window.location.href = "/landing")}
+            onClick={() => (window.location.href = "/home")}
             className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg font-medium"
           >
             🔄 Start New Interview
